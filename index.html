@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузочный экран</title>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Unbounded", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            background-color: rgba(0, 0, 0);
+            color: white;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .logo-container {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            animation: fadeInLogo 1.5s ease-in-out 1.5s forwards;
+            font-size: 100px;
+            color: white;
+            text-transform: uppercase;
+            text-align: center;
+            z-index: 1000;
+        }
+        .logo {
+            width: 130px;
+            height: 130px;
+            border-radius: 25%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 5px solid white;
+            position: relative;
+            transform: rotate(15deg);
+            transition: all .8s;
+        }
+        .logo-text {
+            font-size: 70px;
+            font-weight: bold;
+            color: white;
+            font-family: "Unbounded", sans-serif;
+            transform: rotate(-15deg);
+            transition: all .8s;
+        }
+        @keyframes fadeInLogo {
+            0% { opacity: 0; transform: translateY(-50%) scale(.7); }
+            100% { opacity: 1; transform: translateY(-50%) scale(1); }
+        }
+
+        .logo-text.expanded {
+            transform: rotate(-35deg);
+        }
+        .logo.expanded {
+            transform: rotate(35deg) scale(.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="logo">
+            <div class="logo-text">Z</div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const logo = document.querySelector('.logo');
+        const text = document.querySelector('.logo-text');
+        let waves = [];
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Wave {
+            constructor(x, y, size, opacity, rotation, borderRadius) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.opacity = opacity;
+                this.rotation = rotation;
+                this.borderRadius = borderRadius; 
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                ctx.beginPath();
+                ctx.moveTo(-this.size / 2 + this.borderRadius, -this.size / 2);
+                ctx.lineTo(this.size / 2 - this.borderRadius, -this.size / 2);
+                ctx.quadraticCurveTo(this.size / 2, -this.size / 2, this.size / 2, -this.size / 2 + this.borderRadius);
+                ctx.lineTo(this.size / 2, this.size / 2 - this.borderRadius);
+                ctx.quadraticCurveTo(this.size / 2, this.size / 2, this.size / 2 - this.borderRadius, this.size / 2);
+                ctx.lineTo(-this.size / 2 + this.borderRadius, this.size / 2);
+                ctx.quadraticCurveTo(-this.size / 2, this.size / 2, -this.size / 2, this.size / 2 - this.borderRadius);
+                ctx.lineTo(-this.size / 2, -this.size / 2 + this.borderRadius);
+                ctx.quadraticCurveTo(-this.size / 2, -this.size / 2, -this.size / 2 + this.borderRadius, -this.size / 2);
+
+                ctx.closePath();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            update() {
+                this.size += 4.5;
+                this.opacity -= 0.025;
+                this.borderRadius += 0.7;
+            }
+        }
+
+        function createWave() {
+            waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 150, 0.8, 5, 40));
+            waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 170, 0.5, 5, 40));
+            waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 190, 0.2, 5, 40));
+        }
+
+        function animateWaves() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  
+            waves.forEach((wave, index) => {
+                wave.draw();
+                wave.update();
+                if (wave.opacity <= 0) waves.splice(index, 1);
+            });
+            requestAnimationFrame(animateWaves); 
+        }
+
+        setInterval(() => {
+            logo.classList.add('expanded');
+            text.classList.add('expanded');
+            setTimeout(() => {
+                logo.classList.remove('expanded');
+                text.classList.remove('expanded');
+                setTimeout(createWave, 300)
+            }, 1000);
+        }, 3500);
+
+        animateWaves(); 
+    </script>
+</body>
+</html>
