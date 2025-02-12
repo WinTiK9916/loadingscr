@@ -44,7 +44,7 @@
             align-items: center;
             border: 5px solid white;
             position: relative;
-            transform: rotate(15deg);
+            transform: rotate(5deg);
             transition: all .8s;
         }
         .logo-text {
@@ -52,7 +52,7 @@
             font-weight: bold;
             color: white;
             font-family: "Unbounded", sans-serif;
-            transform: rotate(-15deg);
+            transform: rotate(-5deg);
             transition: all .8s;
         }
 
@@ -94,7 +94,7 @@
                 this.y = y;
                 this.size = size;
                 this.opacity = opacity;
-                this.rotation = rotation;
+                this.rotation = rotation * (Math.PI / 180);
                 this.borderRadius = borderRadius; 
             }
 
@@ -152,7 +152,7 @@
                 text.classList.remove('expanded');
                 setTimeout(createWave, 300)
             }, 1000);
-        }, 1500);
+        }, 2500);
 
         animateWaves(); 
     </script>
