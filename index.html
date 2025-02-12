@@ -28,8 +28,7 @@
         .logo-container {
             position: absolute;
             top: 50%;
-            transform: translateY(-50%) scale(0);
-            animation: fadeInLogo 1.5s ease-in-out 1.5s forwards;
+            transform: translateY(-50%);
             font-size: 100px;
             color: white;
             text-transform: uppercase;
@@ -55,10 +54,6 @@
             font-family: "Unbounded", sans-serif;
             transform: rotate(-15deg);
             transition: all .8s;
-        }
-        @keyframes fadeInLogo {
-            0% { opacity: 0; transform: translateY(-50%) scale(.7); }
-            100% { opacity: 1; transform: translateY(-50%) scale(1); }
         }
 
         .logo-text.expanded {
@@ -157,7 +152,7 @@
                 text.classList.remove('expanded');
                 setTimeout(createWave, 300)
             }, 1000);
-        }, 3500);
+        }, 1500);
 
         animateWaves(); 
     </script>
