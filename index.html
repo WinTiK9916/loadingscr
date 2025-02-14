@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Загрузочный экран</title>
     <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
@@ -105,6 +104,9 @@
         let waves = [];
         let images = [];
         let currentImageIndex = 0;
+        let nextImageIndex = 0;
+        let imagesLoaded = false;
+        let hasImages = false;
 
         const imageUrls = [
             'https://i.imgur.com/nuIy4vc.jpeg',
@@ -112,11 +114,45 @@
             'https://i.pinimg.com/originals/8e/b6/11/8eb61113c24920bc72d1ab5e68838541.png'
         ];
 
-        imageUrls.forEach(function(url) {
+        let loadedImages = 0;
+        images = new Array(imageUrls.length);
+        
+        imageUrls.forEach(function(url, index) {
             const img = new Image();
+            img.onerror = function() {
+                images[index] = null;
+                loadedImages++;
+                checkAllLoaded();
+            };
+            img.onload = function() {
+                images[index] = img;
+                loadedImages++;
+                checkAllLoaded();
+            };
             img.src = url;
-            images.push(img);
         });
+
+        function checkAllLoaded() {
+            if (loadedImages === imageUrls.length) {
+                imagesLoaded = true;
+                const validImages = images.filter(img => img !== null);
+                hasImages = validImages.length > 0;
+                
+                if (hasImages) {
+                    currentImageIndex = images.findIndex(img => img !== null);
+                    nextImageIndex = findNextValidIndex(currentImageIndex);
+                }
+            }
+        }
+
+        function findNextValidIndex(startIndex) {
+            let index = (startIndex + 1) % images.length;
+            while (index !== startIndex) {
+                if (images[index] !== null) return index;
+                index = (index + 1) % images.length;
+            }
+            return startIndex;
+        }
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -171,7 +207,6 @@
         }
 
         let fadeAlpha = .55;
-        let nextImageIndex = (currentImageIndex + 1) % images.length;
         let isFading = false;
         let animate = false;
         let blackOverlayAlpha = 1;
@@ -198,22 +233,21 @@
         function animateWaves() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (animate) {
-                ctx.globalAlpha = fadeAlpha;
-                if (images[currentImageIndex]) drawImageProportional(images[currentImageIndex]);
-
-                if (isFading) {
-                    ctx.globalAlpha = 1 - fadeAlpha;
-                    if (images[nextImageIndex]) drawImageProportional(images[nextImageIndex]);
+            if (animate && hasImages) {
+                if (images[currentImageIndex]) {
+                    ctx.globalAlpha = fadeAlpha;
+                    drawImageProportional(images[currentImageIndex]);
                 }
 
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = `rgba(0, 0, 0, ${blackOverlayAlpha + 0.6})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = `rgba(0, 0, 0, ${blackOverlayAlpha})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (isFading && images[nextImageIndex]) {
+                    ctx.globalAlpha = 1 - fadeAlpha;
+                    drawImageProportional(images[nextImageIndex]);
+                }
             }
+
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = `rgba(0, 0, 0, ${blackOverlayAlpha + 0.6})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             waves.forEach(function(wave, index) {
                 wave.draw();
@@ -225,7 +259,10 @@
         }
 
         function changeImage() {
-            if (isFading) return; 
+            if (!hasImages || isFading || !imagesLoaded) return;
+
+            nextImageIndex = findNextValidIndex(currentImageIndex);
+            if (nextImageIndex === currentImageIndex) return;
 
             isFading = true;
             let fadeInterval = setInterval(function() {
@@ -233,7 +270,7 @@
                 if (fadeAlpha <= 0) {
                     fadeAlpha = 1;
                     currentImageIndex = nextImageIndex;
-                    nextImageIndex = (currentImageIndex + 1) % images.length;
+                    nextImageIndex = findNextValidIndex(currentImageIndex);
                     isFading = false;
                     clearInterval(fadeInterval);
                 }
@@ -256,12 +293,14 @@
                 welcomeText.style.display = 'none';
                 logo.classList.add('move-center');
                 setTimeout(function() {
-                    animate = true;
-                    fadeOutBlackOverlay(); // Запуск плавного исчезновения черного слоя
+                    animate = hasImages;
+                    fadeOutBlackOverlay();
                     logo.classList.add('animated');
                     text.classList.add('animated');
                     setInterval(createWave, 2500);
-                    setInterval(changeImage, 7500); 
+                    if (images.filter(img => img !== null).length > 1) {
+                        setInterval(changeImage, 7500);
+                    }
                 }, 1500);
             }, 1000);
         }, 3000);
