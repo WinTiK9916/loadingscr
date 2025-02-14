@@ -105,42 +105,40 @@
         let waves = [];
         let images = [];
         let currentImageIndex = 0;
-    
+
         const imageUrls = [
             'https://i.imgur.com/nuIy4vc.jpeg',
             'https://i.pinimg.com/originals/88/e6/0a/88e60a88d533286491cbc74a7450335f.jpg',
             'https://i.pinimg.com/originals/8e/b6/11/8eb61113c24920bc72d1ab5e68838541.png'
         ];
-    
-        imageUrls.forEach(url => {
+
+        imageUrls.forEach(function(url) {
             const img = new Image();
             img.src = url;
             images.push(img);
         });
-    
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-    
-        window.addEventListener('resize', () => {
+
+        window.addEventListener('resize', function() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
-    
-        class Wave {
-            constructor(x, y, size, opacity, rotation, borderRadius) {
-                this.x = x;
-                this.y = y;
-                this.size = size;
-                this.opacity = opacity;
-                this.rotation = rotation * (Math.PI / 180);
-                this.borderRadius = borderRadius;
-            }
-    
-            draw() {
+
+        function Wave(x, y, size, opacity, rotation, borderRadius) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.opacity = opacity;
+            this.rotation = rotation * (Math.PI / 180);
+            this.borderRadius = borderRadius;
+
+            this.draw = function() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
-    
+
                 ctx.beginPath();
                 ctx.moveTo(-this.size / 2 + this.borderRadius, -this.size / 2);
                 ctx.lineTo(this.size / 2 - this.borderRadius, -this.size / 2);
@@ -151,33 +149,33 @@
                 ctx.quadraticCurveTo(-this.size / 2, this.size / 2, -this.size / 2, this.size / 2 - this.borderRadius);
                 ctx.lineTo(-this.size / 2, -this.size / 2 + this.borderRadius);
                 ctx.quadraticCurveTo(-this.size / 2, -this.size / 2, -this.size / 2 + this.borderRadius, -this.size / 2);
-    
+
                 ctx.closePath();
                 ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 ctx.restore();
-            }
-    
-            update() {
+            };
+
+            this.update = function() {
                 this.size += 4.5;
                 this.opacity -= 0.025;
                 this.borderRadius += 0.7;
-            }
+            };
         }
-    
+
         function createWave() {
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 120, 0.8, 5, 40));
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 160, 0.5, 5, 40));
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 180, 0.2, 5, 40));
         }
-    
+
         let fadeAlpha = .55;
         let nextImageIndex = (currentImageIndex + 1) % images.length;
         let isFading = false;
         let animate = false;
         let blackOverlayAlpha = 1;
-    
+
         function drawImageProportional(img) {
             const canvasRatio = canvas.width / canvas.height;
             const imgRatio = img.width / img.height;
@@ -217,7 +215,7 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            waves.forEach((wave, index) => {
+            waves.forEach(function(wave, index) {
                 wave.draw();
                 wave.update();
                 if (wave.opacity <= 0) waves.splice(index, 1);
@@ -226,12 +224,11 @@
             requestAnimationFrame(animateWaves);
         }
 
-    
         function changeImage() {
             if (isFading) return; 
-    
+
             isFading = true;
-            let fadeInterval = setInterval(() => {
+            let fadeInterval = setInterval(function() {
                 fadeAlpha -= 0.02;
                 if (fadeAlpha <= 0) {
                     fadeAlpha = 1;
@@ -242,9 +239,9 @@
                 }
             }, 50);
         }
-    
+
         function fadeOutBlackOverlay() {
-            let fadeInterval = setInterval(() => {
+            let fadeInterval = setInterval(function() {
                 blackOverlayAlpha -= 0.02;
                 if (blackOverlayAlpha <= 0) {
                     blackOverlayAlpha = 0;
@@ -252,15 +249,15 @@
                 }
             }, 50);
         }
-    
-        setTimeout(() => {
+
+        setTimeout(function() {
             welcomeText.classList.add('fade-out');
-            setTimeout(() => {
+            setTimeout(function() {
                 welcomeText.style.display = 'none';
                 logo.classList.add('move-center');
-                setTimeout(() => {
+                setTimeout(function() {
                     animate = true;
-                    fadeOutBlackOverlay(); 
+                    fadeOutBlackOverlay(); // Запуск плавного исчезновения черного слоя
                     logo.classList.add('animated');
                     text.classList.add('animated');
                     setInterval(createWave, 2500);
@@ -268,9 +265,8 @@
                 }, 1500);
             }, 1000);
         }, 3000);
-    
+
         animateWaves();
     </script>
-    
 </body>
 </html>
