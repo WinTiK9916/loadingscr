@@ -96,29 +96,36 @@
     <canvas id="canvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const logo = document.querySelector('.logo');
-        const text = document.querySelector('.logo-text');
-        const welcomeText = document.getElementById('welcome-text');
-        let waves = [];
-        let images = [];
-        let currentImageIndex = 0;
-        let nextImageIndex = 0;
-        let imagesLoaded = false;
-        let hasImages = false;
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var logo = document.querySelector('.logo');
+        var text = document.querySelector('.logo-text');
+        var welcomeText = document.getElementById('welcome-text');
+        var waves = [];
+        var images = [];
+        var currentImageIndex = 0;
+        var nextImageIndex = 0;
+        var imagesLoaded = false;
+        var hasImages = false;
 
-        const imageUrls = [
-            'https://i.imgur.com/nuIy4vc.jpeg',
-            'https://i.pinimg.com/originals/88/e6/0a/88e60a88d533286491cbc74a7450335f.jpg',
-            'https://i.pinimg.com/originals/8e/b6/11/8eb61113c24920bc72d1ab5e68838541.png'
-        ];
+        var imageUrls = [];
 
-        let loadedImages = 0;
+        var rawFile = new XMLHttpRequest();
+        rawFile.open("GET", "/api/screenshots", false);
+        rawFile.onreadystatechange = function () {
+            if (rawFile.status === 200 || rawFile.status == 0) {
+                var str = rawFile.responseText;
+                if (str == "") { return }
+                imageUrls = JSON.parse(str);
+            }
+        }
+        rawFile.send(null);
+
+        var loadedImages = 0;
         images = new Array(imageUrls.length);
         
-        imageUrls.forEach(function(url, index) {
-            const img = new Image();
+        imageUrls.forEach(function(imageInfo, index) {
+            var img = new Image();
             img.onerror = function() {
                 images[index] = null;
                 loadedImages++;
@@ -129,13 +136,13 @@
                 loadedImages++;
                 checkAllLoaded();
             };
-            img.src = url;
+            img.src = imageInfo.imageUrl;
         });
 
         function checkAllLoaded() {
             if (loadedImages === imageUrls.length) {
                 imagesLoaded = true;
-                const validImages = images.filter(img => img !== null);
+                var validImages = images.filter(img => img !== null);
                 hasImages = validImages.length > 0;
                 
                 if (hasImages) {
@@ -146,7 +153,7 @@
         }
 
         function findNextValidIndex(startIndex) {
-            let index = (startIndex + 1) % images.length;
+            var index = (startIndex + 1) % images.length;
             while (index !== startIndex) {
                 if (images[index] !== null) return index;
                 index = (index + 1) % images.length;
@@ -201,21 +208,23 @@
         }
 
         function createWave() {
+            console.log("creating...");
+            if (document.visibilityState !== "visible") return;
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 120, 0.8, 5, 40));
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 160, 0.5, 5, 40));
             waves.push(new Wave(window.innerWidth / 2, window.innerHeight / 2, 180, 0.2, 5, 40));
         }
 
-        let fadeAlpha = .55;
-        let isFading = false;
-        let animate = false;
-        let blackOverlayAlpha = 1;
+        var fadeAlpha = .55;
+        var isFading = false;
+        var animate = false;
+        var blackOverlayAlpha = 1;
 
         function drawImageProportional(img) {
-            const canvasRatio = canvas.width / canvas.height;
-            const imgRatio = img.width / img.height;
+            var canvasRatio = canvas.width / canvas.height;
+            var imgRatio = img.width / img.height;
 
-            let drawWidth, drawHeight;
+            var drawWidth, drawHeight;
             if (imgRatio > canvasRatio) {
                 drawHeight = canvas.height;
                 drawWidth = img.width * (canvas.height / img.height);
@@ -224,8 +233,8 @@
                 drawHeight = img.height * (canvas.width / img.width);
             }
 
-            const offsetX = (canvas.width - drawWidth) / 2;
-            const offsetY = (canvas.height - drawHeight) / 2;
+            var offsetX = (canvas.width - drawWidth) / 2;
+            var offsetY = (canvas.height - drawHeight) / 2;
 
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         }
@@ -265,7 +274,7 @@
             if (nextImageIndex === currentImageIndex) return;
 
             isFading = true;
-            let fadeInterval = setInterval(function() {
+            var fadeInterval = setInterval(function() {
                 fadeAlpha -= 0.02;
                 if (fadeAlpha <= 0) {
                     fadeAlpha = 1;
@@ -278,7 +287,7 @@
         }
 
         function fadeOutBlackOverlay() {
-            let fadeInterval = setInterval(function() {
+            var fadeInterval = setInterval(function() {
                 blackOverlayAlpha -= 0.02;
                 if (blackOverlayAlpha <= 0) {
                     blackOverlayAlpha = 0;
@@ -289,15 +298,19 @@
 
         setTimeout(function() {
             welcomeText.classList.add('fade-out');
+
             setTimeout(function() {
                 welcomeText.style.display = 'none';
                 logo.classList.add('move-center');
+
                 setTimeout(function() {
                     animate = hasImages;
                     fadeOutBlackOverlay();
                     logo.classList.add('animated');
                     text.classList.add('animated');
-                    setInterval(createWave, 2500);
+
+                    logo.addEventListener("animationiteration", createWave);
+
                     if (images.filter(img => img !== null).length > 1) {
                         setInterval(changeImage, 7500);
                     }
